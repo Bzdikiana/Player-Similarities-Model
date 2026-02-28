@@ -1,0 +1,143 @@
+# Model Configuration
+# Configuration for the GNN-based player embedding model
+
+# Overall architecture
+architecture:
+  name: "PlayerEmbeddingModel"
+  
+  # Final embedding dimension
+  embedding_dim: 128
+  
+  # Whether to L2-normalize final embeddings
+  normalize_embeddings: true
+
+# Event Graph Encoder
+event_encoder:
+  # Node embedding dimension
+  node_embedding_dim: 64
+  
+  # Number of GAT layers
+  n_gat_layers: 3
+  
+  # GAT attention heads
+  n_attention_heads: 4
+  
+  # Hidden dimension for GAT
+  gat_hidden_dim: 128
+  
+  # Dropout rate
+  dropout: 0.1
+  
+  # Use FiLM conditioning for context
+  use_film: true
+  
+  # Pooling method for event embedding
+  pooling: "actor"  # Options: "mean", "max", "attention", "actor"
+  
+  # Input feature dimensions
+  position_vocab_size: 30
+  event_type_vocab_size: 40
+
+# FiLM Conditioning
+film:
+  # Context features to use
+  context_features:
+    - "period"       # 1-5
+    - "minute"       # 0-120 (normalized)
+    - "score_diff"   # -10 to 10
+    - "is_home"      # 0/1
+  
+  # Context encoding dimension
+  context_dim: 32
+  
+  # Number of FiLM layers to apply
+  n_layers: 2
+
+# Temporal Transformer Encoder
+temporal_encoder:
+  # Number of transformer layers
+  n_layers: 4
+  
+  # Attention heads
+  n_heads: 8
+  
+  # Hidden dimension (d_model)
+  hidden_dim: 256
+  
+  # Feedforward dimension
+  ff_dim: 512
+  
+  # Dropout
+  dropout: 0.1
+  
+  # Time encoding type
+  time_encoding: "sinusoidal"  # Options: "sinusoidal", "learned"
+  
+  # Maximum sequence length
+  max_seq_length: 200
+  
+  # Pooling method
+  pooling: "cls"  # Options: "cls", "mean", "last"
+
+# Fusion Head
+fusion_head:
+  # Hidden dimensions for projection
+  hidden_dims: [256, 128]
+  
+  # Final embedding dimension (should match architecture.embedding_dim)
+  output_dim: 128
+  
+  # Dropout
+  dropout: 0.1
+  
+  # Number of role classes (for auxiliary task)
+  n_roles: 15
+
+# Reliability Head
+reliability:
+  # k parameter for r = n / (n + k)
+  k: 50.0
+  
+  # Minimum reliability
+  min_reliability: 0.1
+  
+  # Whether to learn reliability from data
+  learnable: true
+  
+  # Hidden dimension for reliability network
+  hidden_dim: 64
+
+# Global Player Graph (cold-start regularization)
+global_graph:
+  enabled: true
+  
+  # Embedding dimension for global graph
+  embedding_dim: 128
+  
+  # Number of GCN layers
+  n_layers: 2
+  
+  # Edge types to include
+  edge_types:
+    - "teammate_coevent"   # Shared events on same team
+    - "opponent_coevent"   # Faced each other
+    - "colineup"           # Appeared in same lineup
+  
+  # Edge weight parameters
+  edge_weighting:
+    # Recency decay
+    recency_half_life_days: 365
+    
+    # Minimum co-occurrences for edge
+    min_cooccurrences: 3
+  
+  # Consistency loss weight
+  consistency_weight: 0.1
+
+# Model initialization
+initialization:
+  # Weight initialization method
+  method: "xavier_uniform"
+  
+  # Embedding initialization
+  embedding_init_std: 0.02

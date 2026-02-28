@@ -1,0 +1,100 @@
+# Data Configuration
+# Configuration for data loading, preprocessing, and augmentation
+
+# Data sources
+sources:
+  statsbomb:
+    type: "statsbomb_open"
+    base_url: "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
+    competitions:
+      - competition_id: 11  # La Liga
+        seasons: [27, 26, 25]  # 2015/16, 2014/15, 2013/14
+      - competition_id: 43  # World Cup
+        seasons: [3]  # 2018
+      - competition_id: 2  # Premier League
+        seasons: [44, 27]
+
+# Pitch normalization
+pitch:
+  # Standard pitch dimensions (StatsBomb uses 120x80)
+  length: 120.0
+  width: 80.0
+  
+  # Normalize coordinates to [0, 1] range
+  normalize: true
+  
+  # Attack direction normalization
+  attack_direction: "right"  # Always normalize so attacking team goes right
+
+# Event filtering
+events:
+  # Minimum events per player for inclusion
+  min_events_per_player: 50
+  
+  # Event types to include (null = all)
+  include_types: null
+  
+  # Event types to exclude
+  exclude_types:
+    - "Starting XI"
+    - "Tactical Shift"
+    - "Substitution"
+    - "Half Start"
+    - "Half End"
+
+# Player filtering
+players:
+  # Minimum minutes played
+  min_minutes: 90
+  
+  # Minimum matches
+  min_matches: 1
+  
+  # Positions to include (null = all)
+  include_positions: null
+  
+  # Exclude goalkeepers from similarity
+  exclude_goalkeepers: false
+
+# Feature extraction
+features:
+  # Spatial grid size for heatmaps
+  grid_size: [12, 8]
+  
+  # Action chain parameters
+  chain:
+    max_length: 10
+    action_types:
+      - "Pass"
+      - "Carry"
+      - "Shot"
+      - "Dribble"
+      - "Ball Receipt*"
+      - "Pressure"
+      - "Duel"
+      - "Interception"
+      - "Ball Recovery"
+      - "Clearance"
+  
+  # Temporal parameters
+  temporal:
+    max_sequence_length: 100
+    time_bucket_minutes: 5
+
+# Data splits
+splits:
+  train: 0.7
+  val: 0.15
+  test: 0.15
+  
+  # Split by match to avoid leakage
+  split_by: "match"
+  
+  # Random seed
+  seed: 42
+
+# Caching
+cache:
+  enabled: true
+  directory: "data/cache"
+  compression: "lz4"

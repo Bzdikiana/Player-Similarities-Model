@@ -1,0 +1,28 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Player Similarity Model - Requirements
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Core Data Science
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# StatsBomb Data Access
+statsbombpy>=1.4.0
+
+# Jupyter Notebook Support (optional, for development)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Progress Bars (optional)
+tqdm>=4.62.0
+
+# Type Hints (Python 3.8+)
+typing_extensions>=4.0.0

@@ -1,0 +1,157 @@
+# Training Configuration
+# Configuration for the training loop and optimization
+
+# Basic training
+training:
+  # Maximum epochs
+  max_epochs: 100
+  
+  # Batch size (number of player instances per batch)
+  batch_size: 64
+  
+  # Number of workers for data loading
+  num_workers: 4
+  
+  # Pin memory for faster GPU transfer
+  pin_memory: true
+  
+  # Gradient accumulation steps
+  gradient_accumulation: 1
+  
+  # Random seed
+  seed: 42
+
+# Optimizer
+optimizer:
+  name: "adamw"
+  
+  # Learning rate
+  lr: 1.0e-4
+  
+  # Weight decay (L2 regularization)
+  weight_decay: 1.0e-5
+  
+  # Adam parameters
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Learning rate scheduler
+scheduler:
+  name: "cosine_annealing_warm_restarts"
+  
+  # Initial period
+  T_0: 10
+  
+  # Period multiplier
+  T_mult: 2
+  
+  # Minimum learning rate
+  eta_min: 1.0e-6
+  
+  # Warmup epochs
+  warmup_epochs: 5
+
+# Loss function
+loss:
+  # Primary contrastive loss
+  contrastive:
+    name: "infonce"
+    temperature: 0.07
+    weight: 1.0
+  
+  # Auxiliary losses
+  auxiliary:
+    # Role classification loss
+    role_classification:
+      enabled: true
+      weight: 0.1
+    
+    # Consistency loss (data vs global graph)
+    consistency:
+      enabled: true
+      weight: 0.1
+      margin: 0.1
+    
+    # Event type prediction (reconstruction)
+    event_prediction:
+      enabled: false
+      weight: 0.05
+
+# Sampling strategy
+sampling:
+  # How to sample positives (same player, different context)
+  positive_strategy: "same_player_different_match"
+  
+  # Minimum time gap for same-match positives (minutes)
+  same_match_min_gap: 15
+  
+  # Number of negatives per positive
+  negatives_per_positive: 63  # For batch_size=64
+  
+  # Hard negative mining
+  hard_negatives:
+    enabled: true
+    # Use top-k hardest negatives
+    top_k: 16
+
+# Regularization
+regularization:
+  # Dropout
+  dropout: 0.1
+  
+  # Gradient clipping
+  gradient_clip: 1.0
+  
+  # Label smoothing (for auxiliary tasks)
+  label_smoothing: 0.1
+
+# Mixed precision training
+mixed_precision:
+  enabled: true
+  opt_level: "O1"
+
+# Checkpointing
+checkpointing:
+  # Directory for checkpoints
+  directory: "checkpoints"
+  
+  # Save every N epochs
+  save_every: 5
+  
+  # Keep only best N checkpoints
+  keep_top_k: 3
+  
+  # Save on validation improvement
+  save_best_only: true
+  
+  # Monitor metric for best
+  monitor: "val_loss"
+  mode: "min"
+
+# Early stopping
+early_stopping:
+  enabled: true
+  patience: 10
+  min_delta: 1.0e-4
+  monitor: "val_loss"
+  mode: "min"
+
+# Logging
+logging:
+  # Log every N batches
+  log_interval: 10
+  
+  # Validation every N epochs
+  val_interval: 1
+  
+  # Experiment tracking
+  experiment_tracking:
+    enabled: true
+    backend: "tensorboard"  # Options: "tensorboard", "wandb", "mlflow"
+    project_name: "mlse_player_similarity"
+
+# Distributed training
+distributed:
+  enabled: false
+  backend: "nccl"
+  find_unused_parameters: false

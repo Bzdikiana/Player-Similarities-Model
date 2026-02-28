@@ -1,0 +1,142 @@
+# Evaluation Configuration
+# Configuration for model evaluation and similarity retrieval
+
+# Embedding evaluation
+embedding_metrics:
+  # Recall@K values to compute
+  recall_k: [1, 5, 10, 20, 50]
+  
+  # NDCG@K values
+  ndcg_k: [5, 10, 20]
+  
+  # Similarity metric
+  metric: "cosine"
+
+# Embedding diagnostics
+diagnostics:
+  # Check for embedding collapse
+  collapse_detection:
+    enabled: true
+    # Alert if mean pairwise similarity > threshold
+    similarity_threshold: 0.9
+    # Alert if dimensional variance < threshold
+    variance_threshold: 1.0e-6
+  
+  # Uniformity metric (should be negative, more negative = better)
+  uniformity:
+    enabled: true
+    t: 2.0
+  
+  # Alignment metric (for positive pairs)
+  alignment:
+    enabled: true
+
+# Cold-start evaluation
+cold_start:
+  enabled: true
+  
+  # Event count thresholds for binning
+  thresholds: [10, 50, 100, 500]
+  
+  # Report metrics per bin
+  metrics_per_bin: ["recall_at_10", "ndcg_at_10"]
+
+# Retrieval evaluation
+retrieval:
+  # Default number of results
+  default_k: 10
+  
+  # Maximum results
+  max_k: 100
+  
+  # Minimum reliability for retrieval
+  min_reliability: 0.1
+  
+  # Role-based evaluation
+  role_aware:
+    enabled: true
+    # Evaluate within same role
+    same_role_metrics: true
+    # Evaluate cross-role
+    cross_role_metrics: true
+
+# Baseline comparison
+baselines:
+  # Compare against ratio-based similarity
+  ratio_similarity:
+    enabled: true
+    config_path: null  # Use default config
+  
+  # Compare against raw feature vectors
+  raw_features:
+    enabled: true
+    reduction: "pca"
+    n_components: 32
+  
+  # Compare against random embeddings
+  random:
+    enabled: true
+    seed: 42
+
+# Visualization
+visualization:
+  # UMAP/t-SNE projections
+  projections:
+    enabled: true
+    methods: ["umap", "tsne"]
+    n_neighbors: 15
+    min_dist: 0.1
+    
+  # Similarity heatmaps
+  heatmaps:
+    enabled: true
+    max_players: 50
+    
+  # Role distribution
+  role_distribution:
+    enabled: true
+    
+  # Cluster analysis
+  clustering:
+    enabled: true
+    methods: ["kmeans", "hierarchical"]
+    n_clusters: [5, 10, 15, 20]
+
+# Report generation
+reports:
+  # Output directory
+  output_dir: "reports"
+  
+  # Formats
+  formats: ["html", "json"]
+  
+  # Include sections
+  sections:
+    - "embedding_metrics"
+    - "cold_start_analysis"
+    - "baseline_comparison"
+    - "top_similarities"
+    - "role_analysis"
+    - "visualizations"
+
+# Specific player analysis
+player_analysis:
+  # Sample players to analyze in detail
+  sample_size: 10
+  
+  # Show top-K similar for each
+  top_k: 5
+  
+  # Include breakdown by feature
+  feature_breakdown: true
+
+# Evaluation data
+eval_data:
+  # Use held-out test set
+  use_test_set: true
+  
+  # Sample size for expensive computations
+  max_samples: 5000
+  
+  # Random seed
+  seed: 42
