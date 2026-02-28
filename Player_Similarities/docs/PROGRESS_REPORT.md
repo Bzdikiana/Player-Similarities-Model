@@ -768,97 +768,123 @@ The model learns **decisions**, not **outcomes**:
 
 ---
 
-## 8. Future Improvements & Roadmap
+## Future Improvements and Roadmap
 
-### 8.0 Critical Issue: Position Prediction Isn't Enough
+### Why this section matters
 
-**The Problem**: Our current auxiliary task predicts position (14 classes), achieving 54.9% accuracy. But this misses the point:
+The model is already producing meaningful embeddings, but the next work needs to directly improve three things.
 
-- **Position ≠ Playing Style**: A CM and CDM may have identical spatial patterns but completely different decision-making
-- **Two CDMs can be opposites**: Busquets (patient, technical) vs. Casemiro (aggressive, physical)
-- **14 positions is too granular**: Left Center Back vs Right Center Back? Functionally identical.
+1. Representation quality so embeddings encode decisions not only average locations  
+2. Training stability so learning is consistent across epochs  
+3. Evaluation credibility so similarity results match football reality and not just intuition
 
-**The Solution**: 
+### Data and context checks that impact embedding quality
 
-1. **Consolidate 14 positions → 7 groups**:
+Before changing architecture or adding more tasks, I will run targeted audits to confirm the input signal is correct and consistent.
 
-| Group | Merges | Football Logic |
-|-------|--------|----------------|
-| Goalkeeper | GK | Unique role |
-| Center Back | RCB, LCB, CB | Same job |
-| Full Back | RB, LB, RWB, LWB | Modern overlap |
-| Defensive Mid | RDM, LDM, CDM | Holding players |
-| Central Mid | RM, LM, CM | Box-to-box |
-| Winger | RW, LW | Wide attackers |
-| Forward | RCF, LCF, CF | Goal scorers |
+1. Context coverage checks  
+   Verify freeze frame completeness by event type and competition  
+   Measure missingness patterns and whether they correlate with certain roles or match phases  
 
-2. **Add action distribution prediction**: Instead of WHERE they play, predict HOW they play (what % passes vs dribbles vs shots)
+2. State distribution sanity checks  
+   Compare pressure density, nearby teammate options, pitch zones, and match context variables across competitions  
+   Confirm the model sees comparable context and is not learning league specific biases  
 
-### 8.1 Next Week (Week 1)
+3. Per player sample quality  
+   Track event counts, event mix, and context diversity per player  
+   Create an embedding confidence score so low support players do not dominate examples and evaluation  
 
-| Task | Description | Priority |
-|------|-------------|----------|
-| 🔲 **Consolidate positions** | Reduce 14 → 7 position groups | 🔴 HIGH |
-| 🔲 **Position filtering** | Add position filter to similarity search | 🔴 HIGH |
-| 🔲 **Input validation** | Sanitize API inputs, handle edge cases | 🟡 MEDIUM |
-| 🔲 **Generate figures** | Run analytics notebook for docs | 🟡 MEDIUM |
+### Training experiments focused on learning dynamics
 
-### 8.2 Two Weeks (Week 2)
+I will structure experiments around measurable signals such as positive versus negative similarity gap, retrieval stability across checkpoints, and collapse indicators.
 
-| Task | Description | Priority |
-|------|-------------|----------|
-| **Action distribution task** | Predict action type distribution as auxiliary | 🔴 HIGH |
-| **Same-position comparisons** | Only compare players within position groups | 🔴 HIGH |
-| **Hyperparameter tuning** | Temperature, batch size experiments | 🟡 MEDIUM |
-| **Streamlit demo** | Interactive web interface | 🟡 MEDIUM |
+1. Epoch and schedule sweeps  
+   Run short controlled sweeps varying epoch count and learning rate scheduling  
+   Track similarity gap, embedding variance, and nearest neighbor stability  
 
-**Key insight**: When a scout says "find me a player like Rodri", they don't want another CDM—they want a **deep-lying playmaker who controls tempo**. Our consolidated positions + action distributions capture this.
+2. Objective and loss function tests  
+   Evaluate alternatives to current contrastive setup  
+   Compare auxiliary objectives such as next action class, action distribution tendencies, and action plus destination zone  
+   Test whether adding structured metric learning constraints improves within role style separation  
 
-### 8.3 One Month (Weeks 3-4)
+3. Hard negative strategy  
+   Introduce harder negatives within the same broad role family  
+   This forces the embedding space to separate style, not only role  
 
-| Task | Description | Why It Matters |
-|------|-------------|----------------|
-| **Expert validation** | Show results to scouts, collect feedback | Validate real-world usefulness |
-| **Style clustering** | K-means within position groups to discover archetypes | "Overlapping fullback" vs "Inverted fullback" |
-| **Football context gaps** | Add xG weighting, decision timing | Capture quality not just quantity |
-| **Documentation** | Complete all docs, examples | Ready for handoff |
+4. Output head experiments  
+   Compare a simple projection head against a slightly richer head  
+   Evaluate whether multi label style outputs improve final embedding geometry  
 
-### 8.4 Known Technical Debt
+### Retrieval upgrades so similarity answers real scouting questions
 
-```python
-# Issues to address:
-# ─────────────────────────────────────────────────────────
+The retrieval layer should match how an analyst would actually use similarity.
 
-# 1. Loss spikes during training
-#    - Epochs 22, 24, 28, 38, 39 showed high loss
-#    - Need: gradient clipping, learning rate warmup
+1. Role aware retrieval  
+   Filter candidates to a broad role family first, then rank by embedding similarity  
+   Allow optional constraints such as competition, season, minutes, and event count thresholds  
 
-# 2. Hardcoded paths
-PATH = 'outputs/embeddings.pt'  # Should use config file
+2. Situation conditioned similarity  
+   Add an option to compute similarity on subsets of events  
+   Examples include build up, final third actions, defending phases, and transitions  
+   This enables statements like similar in buildup but different in final third  
 
-# 3. No logging framework
-print("Loading...")  # Should use proper logging
+3. Explanation layer  
+   For a similar pair, surface why they are similar  
+   Include top action types, typical zones, pressure levels, pass direction tendencies, and carry length tendencies  
 
-# 4. Memory management
-#    - Large batches can OOM
-#    - Need chunking strategy for graph building
+### Evaluation plan using a curated benchmark list
 
-# 5. No model versioning
-#    - Can't track which model produced which embeddings
-```
+This will make results much more convincing and will guide model iteration.
 
-### 8.5 Parameter Experiments to Try
+1. Build a benchmark set of anchors and expected similars  
+   Create a list of players I believe played similarly in the leagues and seasons used for training  
+   For each anchor, define expected similar players and expected dissimilar players within the same broad role family  
+   Add a short football reason for each choice  
 
-| Parameter | Current | Try | Rationale |
-|-----------|---------|-----|-----------|
-| Temperature | 0.07 | 0.05, 0.1 | Affects contrastive sharpness |
-| Batch Size | 32 | 64, 128 | More negatives per batch |
-| Learning Rate | 1e-4 | 5e-5, 2e-4 | May reduce loss spikes |
-| Epochs | 50 | 100 | May improve further |
-| Dropout | 0.1 | 0.2 | May reduce overfitting |
-| GNN Layers | 3 | 4, 5 | Deeper graph reasoning |
+2. Compare benchmark versus model retrieval  
+   For each anchor, compute top k similar players from embeddings  
+   Track how often expected similars appear in top k and how often expected dissimilars appear  
+   Break down results by competition and broad role family  
 
----
+3. Iterate based on failure modes  
+   When the model misses an expected similar, inspect which events dominate each embedding  
+   Adjust one of the following based on diagnosis  
+   Sequence sampling strategy  
+   Auxiliary objective  
+   Negative selection strategy  
+   Context features in the graph encoder  
+
+4. Add qualitative case studies  
+   For a few anchors, show model top similars and my expected similars side by side  
+   Include a brief diagnosis of matches and mismatches  
+
+### Engineering upgrades to accelerate iteration
+
+These improvements reduce friction and make experiments reproducible.
+
+1. Experiment tracking  
+   Log configs, seeds, dataset snapshot identifiers, and checkpoint metadata  
+   Save embedding versions with enough info to reproduce figures and queries  
+
+2. Stability improvements  
+   Apply gradient clipping and learning rate warmup consistently  
+   Add early stopping based on retrieval stability, not only loss curves  
+
+3. Efficiency improvements  
+   Cache graph building where possible  
+   Chunk batches safely to avoid memory issues  
+   Add lightweight validation runs that can execute frequently  
+
+### Roadmap milestones
+
+1. Near term  
+   Data audits, confidence scoring, role aware retrieval, initial benchmark list, short epoch and objective sweeps  
+
+2. Medium term  
+   Hard negatives, situation conditioned similarity, explanation layer, expanded benchmark evaluation, improved auxiliary targets  
+
+3. Longer term  
+   Expert feedback, archetype discovery within role families, downstream task validation for scouting use cases  
 
 ## 9. Conclusion
 
@@ -963,4 +989,5 @@ MLSE_Player_Similarities/
 | **FiLM** | Feature-wise Linear Modulation |
 | **Time2Vec** | Learnable time encoding |
 | **360 Data** | Freeze-frame positions of all players |
+
 
